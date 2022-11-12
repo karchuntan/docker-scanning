@@ -21,10 +21,10 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PASSWORD }} # default
+          password: ${{ secrets.GITHUB_TOKEN }} # default
 
       - name: Docker build
         uses: docker/build-push-action@v3
         with:
           push: ${{ github.event_name != 'pull_request' }}
-          tags: "${{ github.actor }}/dscanner:latest"
+          tags: "ghcr.io/${{ github.actor }}/dscanner:latest"
