@@ -45,6 +45,14 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
+      - name: Run Snyk to check Docker image for vulnerabilities
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ github.run_id }}
+
+      ########################################### trivy
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -68,6 +76,7 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
+      ########################################### trivy
 
       - name: Add Docker metadata
         uses: docker/metadata-action@v4
