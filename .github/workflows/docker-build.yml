@@ -52,6 +52,7 @@ jobs:
         with:
           image: ${{ github.run_id }}
           args: --file=Dockerfile
+          command: monitor
 
       ########################################### trivy
       - name: Run Trivy vulnerability scanner
