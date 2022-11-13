@@ -51,6 +51,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: ${{ github.run_id }}
+          args: --file=Dockerfile
 
       ########################################### trivy
       - name: Run Trivy vulnerability scanner
@@ -75,7 +76,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v2
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: 'snyk.sarif'
       ########################################### trivy
 
       - name: Add Docker metadata
