@@ -1,4 +1,4 @@
-name: Docker build
+name: Docker build Test
 
 on:
   push:
@@ -15,8 +15,12 @@ jobs:
       pull-requests: write
       contents: read
       packages: write
+      security-events: write
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -29,6 +33,52 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }} # default
+
+      - name: Build and export to Docker Images
+        uses: docker/build-push-action@v3
+        with:
+          push: false
+          load: true # export to docker engine rather than pushing to a registry
+          tags: ${{ github.run_id }}
+          target: test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Run Snyk to check Docker image for vulnerabilities
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ github.run_id }}
+          args: --file=Dockerfile
+          command: monitor
+
+      ########################################### trivy
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ github.run_id }}
+          format: 'table'
+          exit-code: '0'
+
+      - name: Run Trivy for HIGH,CRITICAL CVEs and report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ github.run_id }}
+          format: 'sarif'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'HIGH,CRITICAL'
+          output: 'trivy-results.sarif'
+
+      # - name: Upload Trivy scan results to GitHub Security tab
+      #   uses: github/codeql-action/upload-sarif@v2
+      #   if: always()
+      #   with:
+      #     sarif_file: 'snyk.sarif'
+      ########################################### trivy
 
       - name: Add Docker metadata
         uses: docker/metadata-action@v4
